@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stacked Photos with Animal</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f4f4f4;
+    }
+    video {
+      max-width: 100%;
+      margin-bottom: 10px;
+      border-radius: 30px;
+    }
+    canvas {
+      border: 2px solid #333;
+      margin-top: 20px;
+      background: white;
+      max-width: 100%;
+    }
+    button {
+      width: 200px;
+      height: 100px;
+      margin: 10px;
+      padding: 10px 15px;
+      font-size: 24px;
+    }
+
+    .hidden{
+      display: none;
+    }
+
+    #directions, #please{
+      font-size: 50px;
+    }
+
+  </style>
+</head>
+<body>
+  <h2 id="directions">Copy the photo to the best of your ability and click the button! You have 5 seconds to get into position</h2>
+
+  <!-- Webcam preview -->
+
+  <div id="top-part">
+    <img src="heart.jpg" id="poses">
+    <video id="video" autoplay playsinline width="1500" height="1125"></video>
+  </div>
+  
+  <br>
+  <button id="snap">Capture</button>
+
+  <!-- Canvas where photos will stack -->
+  <div>
+    <canvas id="canvas" width="400" height="1200" class="hidden"></canvas>
+    <h1 id="please" class="hidden">Please refresh after you're done :)</h1>
+  </div>
+  
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const snapBtn = document.getElementById("snap");
+    const top_part = document.getElementById("top-part");
+    const directions = document.getElementById("directions");
+    const please = document.getElementById("please");
+    const photoWidth = 340;
+    const photoHeight = 255;
+    const margin = 30; // margin from edges
+    const spacing = 20; // space between stacked photos
+    let photoCount = 0;
+    const poses = document.getElementById("poses");
+
+    const bg = new Image();
+    bg.src = "frame.png";
+    bg.onload = () => {
+      ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+    }
+
+    function updatePose(){
+      switch (photoCount) {
+      case 0:
+        poses.src = "heart.jpg";
+        break;
+      case 1:
+        poses.src = "sajaboys.jpg";
+        break;
+      case 2:
+        poses.src = "groupselfie.jpg";
+        break;
+      case 3:
+        poses.src = "square.jpg";
+        break;
+      default:
+        // Code to execute if no other case matches
+    }
+    }
+    
+
+    // Start webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        console.error("Webcam error:", err);
+        alert("Could not access camera: " + err.message);
+      });
+
+
+
+      snapBtn.addEventListener("click", () => {
+        var timer = 5;
+        if (timer > 0) {
+          snapBtn.disabled = true;
+          var countdown = setInterval(() => {
+            snapBtn.textContent = `Capture (${timer})`;
+            if (timer <= 0) {
+              clearInterval(countdown);
+              snapBtn.textContent = "Capture";
+              snapBtn.disabled = false;
+              capturePhoto();
+            }
+            timer--;
+          }, 1000);
+        } else {
+          capturePhoto();
+        }
+      });
+
+
+
+    // Take photo and stack it
+    function capturePhoto(){
+      if (photoCount < 4) {
+        const x = margin;
+        const y = margin + photoCount * (photoHeight + spacing);
+
+        if (photoCount === 2) {
+          // 👇 Third photo is a fixed image
+          const img = new Image();
+          img.src = "animal.jpg"; // <-- put your file in same folder
+          img.onload = () => {
+            ctx.drawImage(img, x, y, photoWidth, photoHeight);
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x, y, photoWidth, photoHeight);
+          };
+        } else {
+          // First two photos from webcam
+          ctx.drawImage(video, x, y, photoWidth, photoHeight);
+          ctx.strokeStyle = "#333";
+          ctx.lineWidth = 3;
+          ctx.strokeRect(x, y, photoWidth, photoHeight);
+        }
+
+        photoCount++;
+        updatePose();
+
+        if(photoCount == 4){
+          canvas.classList.remove("hidden");
+          top_part.classList.add("hidden");
+          please.classList.remove("hidden");
+          snapBtn.classList.add("hidden");
+          directions.classList.add("hidden");
+        }
+      } else {
+        //alert("All 3 photos already taken!");
+        
+      }
+    };
+  </script>
+</body>
+</html>
